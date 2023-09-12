@@ -1,9 +1,16 @@
 import React from "react";
 
-const Perks = ({ selected, onChange }) => {
+const Perks = ({ selected, perk, onChange }) => {
   function handleCheckbox(ev) {
-    if (ev.target)
-      onChange({ ...selected, [ev.target.name]: !selected[ev.target.name] });
+    const { checked, name } = ev.target;
+    if (checked) {
+      onChange({ ...selected, perks: [...perk, name] });
+    } else {
+      onChange({
+        ...selected,
+        perks: [...perk.filter((item) => item !== name)],
+      });
+    }
   }
   return (
     <div>

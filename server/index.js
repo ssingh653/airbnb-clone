@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken");
 const connectDB = require("./config/dbConn");
 const multer = require("multer");
 const fs = require("fs");
+const Places = require("./models/Places");
 require("dotenv").config();
 
 connectDB();
@@ -17,10 +18,11 @@ const jwtSecret = "2ygf3t4d34rd5jt3r5d34h5f43534y5d";
 
 app.use(express.json());
 app.use(cookieParser());
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(
   cors({
     credentials: true,
-    origin: ["http://localhost:3000", "http://192.168.212.165:3000"],
+    origin: ["http://localhost:3000"],
   })
 );
 
@@ -95,11 +97,6 @@ app.delete("/logout", (req, res) => {
   res.json("logged out");
 });
 
-app.post("/addplaces", (req, res) => {
-  const { value } = req.body;
-  console.log("values", value);
-});
-
 const photosMiddleware = multer({ dest: "uploads/" });
 app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
   const uploadedFiles = [];
@@ -112,6 +109,40 @@ app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
     uploadedFiles.push(newPath.replace("uploads/", ""));
   }
   res.json(uploadedFiles);
+});
+
+app.post("/addplaces", (req, res) => {
+  const {
+    title,
+    address,
+    photos,
+    description,
+    perks,
+    extraInfo,
+    checkIn,
+    checkOut,
+    maxGuests,
+  } = req.body;
+  const { token } = req.cookies;
+  // console.log("values", value);
+  if (token) {
+    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+      if (error) throw error;
+      const PlaceDoc = await Places.create({
+        owner: userData.id,
+        title,
+        address,
+        photos,
+        description,
+        perks,
+        extraInfo,
+        checkIn,
+        checkOut,
+        maxGuests,
+      });
+      res.json(PlaceDoc);
+    });
+  }
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT} `));
