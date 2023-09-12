@@ -36,13 +36,10 @@ const Places = () => {
   }
   function deletePhoto(link) {
     // ev.preventDefault();
-    console.log("deleted", link);
     setValue((prevState) => ({
       ...prevState,
       photos: [...prevState.photos.filter((item) => item !== link)],
     }));
-    // value.photos.filter((item) => item !== link);
-    console.log(value.photos);
   }
 
   function handleFile(ev) {
