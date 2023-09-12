@@ -79,7 +79,7 @@ const Places = () => {
       {action !== "new" && (
         <div className="text-center">
           <Link
-            className="inline-flex gap-2 justify-center border p-2 rounded-full cursor-pointer bg-gray-100 bg-indigo-200 p-2 rounded-full"
+            className="inline-flex gap-2 justify-center border rounded-full cursor-pointer bg-indigo-200 p-2"
             to="/account/places/new"
           >
             <svg
@@ -162,7 +162,7 @@ const Places = () => {
             </div>
 
             <br />
-            <div className="mt-2 gap-2 grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4">
+            <div className="mt-2 gap-2 grid grid-cols-5 md:grid-cols-4 lg:grid-cols-6">
               {value.photos.length > 0 &&
                 value.photos.map((link) => {
                   return (
