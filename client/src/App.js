@@ -8,7 +8,10 @@ import axios from "axios";
 import { UserContextProvider } from "./UserContext";
 import Account from "./pages/Account";
 
-axios.defaults.baseURL = "http://localhost:4000";
+axios.defaults.baseURL = [
+  "http://localhost:4000",
+  "https://airbnb-clone-app-r59g.onrender.com",
+];
 axios.defaults.withCredentials = true;
 
 function App() {
