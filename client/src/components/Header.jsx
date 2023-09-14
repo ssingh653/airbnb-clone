@@ -25,7 +25,7 @@ const Header = () => {
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={1.5}
-          stroke="rgb(37 99 235)"
+          stroke="currentColor"
           className="w-6 h-6 -rotate-90"
         >
           <path
@@ -34,7 +34,7 @@ const Header = () => {
             d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
           />
         </svg>
-        <span className="font-bold text-xl text-blue-600">airbnb</span>
+        <span className="font-bold text-xl text-black">airbnb</span>
       </Link>
       <div className="flex gap-x-2 border border-gray-300 rounded-full px-2 py-2 shadow-sm shadow-gray-300">
         <div className=" pl-4 font-bold self-center">Anywhere</div>

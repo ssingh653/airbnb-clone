@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Perks from "../components/Perks";
 import axios from "axios";
+import Accomodations from "../components/Accomodations";
 
 const Places = () => {
   const [value, setValue] = useState({
@@ -15,23 +16,33 @@ const Places = () => {
     checkOut: "",
     maxGuests: 1,
   });
+
   console.log("value", value);
-  const { action } = useParams();
+  const { action, id } = useParams();
+
   async function formSubmit(ev) {
     ev.preventDefault();
-    const PlacesDoc = await axios.post("/addplaces", {
+    const places = {
       title: value.title,
       address: value.address,
-      photos: JSON.stringify(value.photos),
+      photos: value.photos,
       description: value.description,
-      perks: JSON.stringify(value.perks),
+      perks: value.perks,
       extraInfo: value.extraInfo,
       checkIn: value.checkIn,
       checkOut: value.checkOut,
       maxGuests: parseInt(value.maxGuests),
-    });
-    if (PlacesDoc) {
-      alert("Added Successfully");
+    };
+    if (id) {
+      const PlacesDoc = await axios.put("/addplaces", { id, ...places });
+      if (PlacesDoc) {
+        alert("Added Successfully");
+      }
+    } else {
+      const PlacesDoc = await axios.post("/addplaces", places);
+      if (PlacesDoc) {
+        alert("Added Successfully");
+      }
     }
   }
   function deletePhoto(link) {
@@ -45,13 +56,6 @@ const Places = () => {
   function handleFile(ev) {
     // ev.preventDefault();
     const files = ev.target.files;
-    // for (let i = 0; i < files.length; i++) {
-    //   console.log("files", files[i].name);
-    //   setValue((prevState) => ({
-    //     ...prevState,
-    //     photos: [...prevState.photos, files[i].name],
-    //   }));
-    // }
 
     const data = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -77,27 +81,30 @@ const Places = () => {
   return (
     <div>
       {action !== "new" && (
-        <div className="text-center">
-          <Link
-            className="inline-flex gap-2 justify-center border rounded-full cursor-pointer bg-indigo-200 p-2"
-            to="/account/places/new"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
+        <div>
+          <div className="text-center">
+            <Link
+              className="inline-flex gap-2 justify-center border rounded-full cursor-pointer bg-indigo-200 p-2"
+              to="/account/places/new"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
-            </svg>
-            Add new place
-          </Link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              Add new place
+            </Link>
+          </div>
+          <Accomodations />
         </div>
       )}
       {action === "new" && (
@@ -169,7 +176,11 @@ const Places = () => {
                     <div className="h-28 flex relative" key={link}>
                       <img
                         className="rounded-2xl w-full object-cover"
-                        src={"http://localhost:4000/uploads/" + link}
+                        src={
+                          process.env.NODE_ENV === "production"
+                            ? "https://airbnb-clone-app-r59g.onrender.com"
+                            : "http://localhost:4000/uploads/" + link
+                        }
                         alt="link"
                       />
                       <div

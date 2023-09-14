@@ -12,3 +12,7 @@ textarea {
 button.primary {
   @apply bg-rose-500 w-full p-4 rounded-md font-bold text-white;
 }
+
+h1 {
+  @apply text-lg font-medium;
+}

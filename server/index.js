@@ -145,4 +145,61 @@ app.post("/addplaces", (req, res) => {
   }
 });
 
+app.get("/places", (req, res) => {
+  const { token } = req.cookies;
+
+  if (token) {
+    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+      if (error) throw error;
+      const { id } = userData;
+      const places = await Places.find({ owner: id });
+      res.json(places);
+    });
+  } else {
+    res.json(null);
+  }
+});
+app.get("/places/:id", async (req, res) => {
+  const { id } = req.params;
+  res.json(await Places.findById(id));
+});
+
+app.put("/addplaces", async (req, res) => {
+  const {
+    id,
+    title,
+    address,
+    photos,
+    description,
+    perks,
+    extraInfo,
+    checkIn,
+    checkOut,
+    maxGuests,
+  } = req.body;
+  const { token } = req.cookies;
+  const PlaceDoc = await Places.findById(id);
+  if (token) {
+    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+      if (error) throw error;
+      if (userData.id === PlaceDoc.owner) {
+        Places.updateOne({
+          owner: userData.id,
+          title,
+          address,
+          photos,
+          description,
+          perks,
+          extraInfo,
+          checkIn,
+          checkOut,
+          maxGuests,
+        });
+        Places.bulkSave();
+      }
+      res.json("updated");
+    });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT} `));

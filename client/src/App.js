@@ -7,11 +7,15 @@ import Register from "./pages/registerPage";
 import axios from "axios";
 import { UserContextProvider } from "./UserContext";
 import Account from "./pages/Account";
+import { disableReactDevTools } from "@fvilers/disable-react-devtools";
 
-axios.defaults.baseURL = [
-  "http://localhost:4000",
-  "https://airbnb-clone-app-r59g.onrender.com",
-];
+if (process.env.NODE_ENV === "production") {
+  disableReactDevTools();
+}
+axios.defaults.baseURL =
+  process.env.NODE_ENV === "production"
+    ? "https://airbnb-clone-app-r59g.onrender.com"
+    : "http://localhost:4000";
 axios.defaults.withCredentials = true;
 
 function App() {
@@ -24,6 +28,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/account/:subpage?" element={<Account />} />
           <Route path="/account/:subpage/:action?" element={<Account />} />
+          <Route path="/account/:subpage/:id?" element={<Account />} />
         </Route>
       </Routes>
     </UserContextProvider>
