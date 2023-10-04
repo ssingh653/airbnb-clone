@@ -1,17 +1,44 @@
-import React from "react";
-
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 const Properties = () => {
+  const [places, setPlace] = useState([]);
+  useEffect(() => {
+    async function fetchData() {
+      const { data } = await axios.get("/allplaces");
+      console.log("data", data);
+      setPlace(data);
+    }
+    fetchData();
+  }, []);
   return (
-    <div className="grid grid-cols-3 gap-4 m-4 border border-gray p-4 justify-items-center">
-      <div className="border border-gray m-2 ">01</div>
-      <div className="border border-gray m-2 ">02</div>
-      <div className="border border-gray m-2 ">03</div>
-      <div className="border border-gray m-2 ">04</div>
-      <div className="border border-gray m-2 ">05</div>
-      <div className="border border-gray m-2 ">06</div>
-      <div className="border border-gray m-2 ">07</div>
-      <div className="border border-gray m-2 ">08</div>
-      <div className="border border-gray m-2 ">09</div>
+    <div className="grid grid-cols-4 gap-4 m-4 border border-gray p-4 ">
+      {places.length > 0 &&
+        places.map((place) => (
+          <Link
+            to={"/placeinfo/" + place._id}
+            className="m-2 p-2 cursor-pointer bg-gray-200 rounded-md "
+          >
+            <div className="bg-gray-300 rounded-md h-60 w-full ">
+              {place.photos.length > 0 && (
+                <img
+                  src={
+                    process.env.NODE_ENV === "production"
+                      ? "https://airbnb-clone-app-r59g.onrender.com"
+                      : "http://localhost:4000/uploads/" + place.photos[0]
+                  }
+                  alt="property"
+                  className="object-cover w-full h-full rounded-xl"
+                />
+              )}
+            </div>
+            <div className="grow-0 shrink">
+              <h1>{place.title}</h1>
+
+              <p>{place.description}</p>
+            </div>
+          </Link>
+        ))}
     </div>
   );
 };

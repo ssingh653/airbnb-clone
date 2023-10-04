@@ -83,7 +83,7 @@ const Header = () => {
         </div>
 
         <Link
-          className="gap-3 flex px-1 py-1 border border-gray-300 rounded-full items-center"
+          className="gap-3 flex px-1 py-1 border border-gray-300 rounded-full items-center hover:shadow-md transition-shadow"
           onClick={LoginMenu}
         >
           <svg

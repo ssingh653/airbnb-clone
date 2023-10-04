@@ -159,6 +159,19 @@ app.get("/places", (req, res) => {
     res.json(null);
   }
 });
+app.get("/allplaces", (req, res) => {
+  const { token } = req.cookies;
+
+  if (token) {
+    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+      if (error) throw error;
+      const places = await Places.find();
+      res.json(places);
+    });
+  } else {
+    res.json(null);
+  }
+});
 app.get("/places/:id", async (req, res) => {
   const { id } = req.params;
   res.json(await Places.findById(id));

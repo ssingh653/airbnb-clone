@@ -49,7 +49,7 @@ function RegisterPage() {
           <input
             type="password"
             placeholder="password"
-            valu={password}
+            value={password}
             className=""
             onChange={(ev) => setPassword(ev.target.value)}
           />
