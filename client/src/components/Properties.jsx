@@ -13,7 +13,7 @@ const Properties = () => {
   }, []);
   return (
     <div className="grid grid-cols-4 gap-4 m-4 border border-gray p-4 ">
-      {places.length > 0 &&
+      {places &&
         places.map((place) => (
           <Link
             to={"/placeinfo/" + place._id}
