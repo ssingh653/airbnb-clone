@@ -130,7 +130,7 @@ const Header = () => {
             <div
               className="py-2 absolute top-20 right-20 shadow-[0_0_15px_rgba(0,0,0,0.10)] w-64 bg-white flex flex-col rounded-xl"
               onFocus={async (prev) => {
-                setTimeout(() => setClick(!prev), 100);
+                setTimeout(() => setClick(!prev), 500);
               }}
             >
               <div className="p-3 font-regular">
@@ -154,7 +154,7 @@ const Header = () => {
             <div
               className="py-2 absolute top-20 right-20 shadow-[0_0_15px_rgba(0,0,0,0.10)] w-64 bg-white flex flex-col rounded-xl"
               onFocus={async (prev) => {
-                setTimeout(() => setClick(!prev), 100);
+                setTimeout(() => setClick(!prev), 500);
               }}
             >
               <Link to="/register" className="p-3 hover:bg-gray-100 font-bold">
