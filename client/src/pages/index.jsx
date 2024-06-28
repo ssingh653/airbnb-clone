@@ -1,13 +1,13 @@
-import React from "react";
+import { React, lazy, Suspense } from "react";
 // import { Link } from "react-router-dom";
-// import Header from "../components/Header";
-import Properties from "../components/Properties.jsx";
-
+// import Properties from "../components/Properties.jsx";
+import Loading from "../components/Loading.jsx";
+const Properties = lazy(() => import("../components/Properties.jsx"));
 const index = () => {
   return (
-    <div>
+    <Suspense fallback={<Loading />}>
       <Properties />
-    </div>
+    </Suspense>
   );
 };
 

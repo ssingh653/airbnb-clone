@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import { React, lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Perks from "../components/Perks";
 import axios from "axios";
-import Accomodations from "../components/Accomodations";
+import Loading from "../components/Loading";
+// import Accomodations from "../components/Accomodations";
+const Accomodations = lazy(() => import("../components/Accomodations"));
 
 const Places = () => {
   const [value, setValue] = useState({
@@ -104,7 +106,9 @@ const Places = () => {
               Add new place
             </Link>
           </div>
-          <Accomodations />
+          <Suspense fallback={<Loading />}>
+            <Accomodations />
+          </Suspense>
         </div>
       )}
       {action === "new" && (

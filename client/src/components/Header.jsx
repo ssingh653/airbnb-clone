@@ -60,9 +60,7 @@ const Header = () => {
         </button>
       </div>
       <div className="px-2 gap-4 flex items-center">
-        <Link to="/yourhome" className="font-bold ">
-          Airbnb your home
-        </Link>
+        <Link className="font-bold ">Airbnb your home</Link>
         <div>
           <div className="p-1">
             <svg
@@ -129,9 +127,7 @@ const Header = () => {
           (user ? (
             <div
               className="py-2 absolute top-20 right-20 shadow-[0_0_15px_rgba(0,0,0,0.10)] w-64 bg-white flex flex-col rounded-xl"
-              onFocus={async (prev) => {
-                setTimeout(() => setClick(!prev), 500);
-              }}
+              onClick={(prev) => setClick(!prev)}
             >
               <div className="p-3 font-regular">
                 Welcome, {user.name.split(" ")[0]}
@@ -153,9 +149,7 @@ const Header = () => {
           ) : (
             <div
               className="py-2 absolute top-20 right-20 shadow-[0_0_15px_rgba(0,0,0,0.10)] w-64 bg-white flex flex-col rounded-xl"
-              onFocus={async (prev) => {
-                setTimeout(() => setClick(!prev), 500);
-              }}
+              onClick={(prev) => setClick(!prev)}
             >
               <Link to="/register" className="p-3 hover:bg-gray-100 font-bold">
                 Sign up

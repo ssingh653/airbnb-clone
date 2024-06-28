@@ -12,7 +12,7 @@ const Properties = () => {
     fetchData();
   }, []);
   return (
-    <div className="grid grid-cols-4 gap-4 m-4 border border-gray p-4 ">
+    <div className="grid grid-cols-4 gap-4 m-4 p-4 ">
       {places &&
         places.map((place) => (
           <Link
