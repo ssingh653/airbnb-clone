@@ -14,7 +14,7 @@ const Places = require("./models/Places");
 require("dotenv").config();
 
 connectDB();
-const jwtSecret = "2ygf3t4d34rd5jt3r5d34h5f43534y5d";
+const jwtSecret = process.env.JWT_SECRET;
 
 app.use(express.json());
 app.use(cookieParser());
@@ -22,7 +22,7 @@ app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(
   cors({
     credentials: true,
-    origin: ["http://localhost:3000", "https://airbnb-cl0ne.netlify.app"],
+    origin: ["http://localhost:3000", "https://airbnb-clone-t3um.onrender.com"],
   })
 );
 
@@ -71,21 +71,20 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", (req, res) => {
+app.get("/profile", async (req, res) => {
   const { token } = req.cookies;
 
-  if (token) {
-    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
-      if (error) throw error;
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
-      const userDoc = await User.findById(userData.id)
-        .select("-password")
-        .lean();
-      console.log("inside server profile", userDoc);
-      res.json(userDoc);
-    });
-  } else {
-    res.json(null);
+  try {
+    const userData = await jwt.verify(token, jwtSecret);
+    const userDoc = await User.findById(userData.id).select("-password").lean();
+    res.json(userDoc);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
@@ -111,23 +110,30 @@ app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
   res.json(uploadedFiles);
 });
 
-app.post("/addplaces", (req, res) => {
-  const {
-    title,
-    address,
-    photos,
-    description,
-    perks,
-    extraInfo,
-    checkIn,
-    checkOut,
-    maxGuests,
-  } = req.body;
-  const { token } = req.cookies;
-  // console.log("values", value);
-  if (token) {
+app.post("/addplaces", async (req, res) => {
+  try {
+    const {
+      title,
+      address,
+      photos,
+      description,
+      perks,
+      extraInfo,
+      checkIn,
+      checkOut,
+      maxGuests,
+    } = req.body;
+    const { token } = req.cookies;
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     jwt.verify(token, jwtSecret, {}, async (error, userData) => {
-      if (error) throw error;
+      if (error) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+
       const PlaceDoc = await Places.create({
         owner: userData.id,
         title,
@@ -140,8 +146,12 @@ app.post("/addplaces", (req, res) => {
         checkOut,
         maxGuests,
       });
+
       res.json(PlaceDoc);
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

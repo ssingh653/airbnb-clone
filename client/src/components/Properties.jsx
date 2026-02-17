@@ -24,7 +24,8 @@ const Properties = () => {
                 <img
                   src={
                     process.env.NODE_ENV === "production"
-                      ? "https://airbnb-clone-app-r59g.onrender.com"
+                      ? "https://airbnb-clone-app-r59g.onrender.com/uploads/" +
+                        place.photos[0]
                       : "http://localhost:4000/uploads/" + place.photos[0]
                   }
                   alt="property"
