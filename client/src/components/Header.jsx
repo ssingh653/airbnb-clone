@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [clicked, setClick] = useState(false);
@@ -10,11 +11,17 @@ const Header = () => {
   const LoginMenu = () => {
     setClick(!clicked);
   };
+
+  const navigate = useNavigate();
   const Logout = async () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    await axios.delete("/logout", { withCredentials: true });
-    window.location = "/login";
+    try {
+      await axios.delete("/logout", { withCredentials: true });
+      localStorage.removeItem("token");
+      setUser(null);
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -139,6 +146,13 @@ const Header = () => {
               >
                 Log Out
               </Link>
+              {/* <button
+                onClick={Logout}
+                className="p-3 hover:bg-gray-100 font-bold"
+              >
+                Log Out
+              </button> */}
+
               <Link to="/account" className="p-3 hover:bg-gray-100">
                 Account
               </Link>
