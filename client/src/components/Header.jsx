@@ -13,7 +13,7 @@ const Header = () => {
   const Logout = async () => {
     localStorage.removeItem("token");
     setUser(null);
-    await axios.delete("/logout");
+    await axios.delete("/logout", { withCredentials: true });
     window.location = "/login";
   };
 
@@ -133,7 +133,7 @@ const Header = () => {
                 Welcome, {user.name.split(" ")[0]}
               </div>
               <Link
-                to="/logout"
+                to="/login"
                 className="p-3 hover:bg-gray-100 font-bold"
                 onClick={Logout}
               >
