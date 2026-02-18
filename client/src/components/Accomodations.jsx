@@ -23,14 +23,15 @@ const Accomodations = () => {
           >
             <div className="bg-gray-300 rounded-md mx-2 w-48">
               {place.photos.length > 0 && (
-                <img
-                  src={
-                    process.env.NODE_ENV === "production"
-                      ? "https://airbnb-clone-app-r59g.onrender.com"
-                      : "http://localhost:4000/uploads/" + place.photos[0]
-                  }
-                  alt="property"
-                />
+                // <img
+                //   src={
+                //     process.env.NODE_ENV === "production"
+                //       ? "https://airbnb-clone-app-r59g.onrender.com"
+                //       : "http://localhost:4000/uploads/" + place.photos[0]
+                //   }
+                //   alt="property"
+                // />
+                <img src={place.photos[0]} alt="property" />
               )}
             </div>
             <div className="grow-0 shrink">

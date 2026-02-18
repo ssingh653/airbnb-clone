@@ -178,7 +178,7 @@ const Places = () => {
                 value.photos.map((link) => {
                   return (
                     <div className="h-28 flex relative" key={link}>
-                      <img
+                      {/* <img
                         className="rounded-2xl w-full object-cover"
                         src={
                           process.env.NODE_ENV === "production"
@@ -186,7 +186,13 @@ const Places = () => {
                             : "http://localhost:4000/uploads/" + link
                         }
                         alt="link"
+                      /> */}
+                      <img
+                        className="rounded-2xl w-full object-cover"
+                        src={link}
+                        alt="place"
                       />
+
                       <div
                         className="absolute py-2 px-3 bg-black bg-opacity-50 text-white bottom-2 right-2 rounded-2xl cursor-pointer"
                         onClick={() => deletePhoto(link)}

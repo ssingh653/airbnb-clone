@@ -9,7 +9,9 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const connectDB = require("./config/dbConn");
 const multer = require("multer");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./config/cloudinary");
+// const fs = require("fs");
 const Places = require("./models/Places");
 require("dotenv").config();
 
@@ -23,7 +25,7 @@ app.use(
   cors({
     credentials: true,
     origin: ["http://localhost:3000", "https://airbnb-clone-t3um.onrender.com"],
-  })
+  }),
 );
 
 app.get("/", (req, res) => {
@@ -61,7 +63,7 @@ app.post("/login", async (req, res) => {
         (err, token) => {
           if (err) throw err;
           res.cookie("token", token).json(userDoc);
-        }
+        },
       );
     } else {
       res.status(422).json("pass not ok");
@@ -96,18 +98,38 @@ app.delete("/logout", (req, res) => {
   res.json("logged out");
 });
 
-const photosMiddleware = multer({ dest: "uploads/" });
+// const photosMiddleware = multer({ dest: "uploads/" });
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "airbnb-clone",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  },
+});
+
+const photosMiddleware = multer({ storage });
+
+// app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
+//   const uploadedFiles = [];
+//   for (let i = 0; i < req.files.length; i++) {
+//     const { path, destination, filename, originalname } = req.files[i];
+//     const parts = originalname.split(".");
+//     const ext = parts[parts.length - 1];
+//     const newPath = destination + filename + "." + ext;
+//     fs.renameSync(path, newPath);
+//     uploadedFiles.push(newPath.replace("uploads/", ""));
+//   }
+//   res.json(uploadedFiles);
+// });
+
 app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
-  const uploadedFiles = [];
-  for (let i = 0; i < req.files.length; i++) {
-    const { path, destination, filename, originalname } = req.files[i];
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
-    const newPath = destination + filename + "." + ext;
-    fs.renameSync(path, newPath);
-    uploadedFiles.push(newPath.replace("uploads/", ""));
+  try {
+    const uploadedFiles = req.files.map((file) => file.path);
+    res.json(uploadedFiles);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Upload failed" });
   }
-  res.json(uploadedFiles);
 });
 
 app.post("/addplaces", async (req, res) => {

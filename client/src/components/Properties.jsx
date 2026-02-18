@@ -21,15 +21,20 @@ const Properties = () => {
           >
             <div className="bg-gray-300 rounded-md h-60 w-full ">
               {place.photos.length > 0 && (
+                // <img
+                // className="object-cover w-full h-full rounded-xl"
+                //   src={
+                //     process.env.NODE_ENV === "production"
+                //       ? "https://airbnb-clone-app-r59g.onrender.com/uploads/" +
+                //         place.photos[0]
+                //       : "http://localhost:4000/uploads/" + place.photos[0]
+                //   }
+                //   alt="property"
+                // />
                 <img
-                  src={
-                    process.env.NODE_ENV === "production"
-                      ? "https://airbnb-clone-app-r59g.onrender.com/uploads/" +
-                        place.photos[0]
-                      : "http://localhost:4000/uploads/" + place.photos[0]
-                  }
-                  alt="property"
                   className="object-cover w-full h-full rounded-xl"
+                  src={place.photos[0]}
+                  alt="property"
                 />
               )}
             </div>
