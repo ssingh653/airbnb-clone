@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const PORT = 4000;
@@ -13,7 +14,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("./config/cloudinary");
 // const fs = require("fs");
 const Places = require("./models/Places");
-require("dotenv").config();
+const Booking = require("./models/Booking");
 
 connectDB();
 const jwtSecret = process.env.JWT_SECRET;
@@ -182,27 +183,41 @@ app.get("/places", (req, res) => {
 
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (error, userData) => {
-      if (error) throw error;
-      const { id } = userData;
-      const places = await Places.find({ owner: id });
-      res.json(places);
+      if (error) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      try {
+        const { id } = userData;
+        const places = await Places.find({ owner: id });
+        res.json(places);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
+      }
     });
   } else {
-    res.json(null);
+    res.json([]);
   }
 });
 app.get("/allplaces", async (req, res) => {
-  // const { token } = req.cookies;
-
-  // if (token) {
-  // jwt.verify(token, jwtSecret, {}, async (error, userData) => {
-  //   if (error) throw error;
-  const places = await Places.find({});
-  res.json(places);
-  // });
-  // } else {
-  // res.json(null);
-  // }
+  const { search } = req.query;
+  try {
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { address: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+    const places = await Places.find(query);
+    res.json(places);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 app.get("/places/:id", async (req, res) => {
   const { id } = req.params;
@@ -223,28 +238,126 @@ app.put("/addplaces", async (req, res) => {
     maxGuests,
   } = req.body;
   const { token } = req.cookies;
-  const PlaceDoc = await Places.findById(id);
-  if (token) {
-    jwt.verify(token, jwtSecret, {}, async (error, userData) => {
-      if (error) throw error;
-      if (userData.id === PlaceDoc.owner) {
-        Places.updateOne({
-          owner: userData.id,
-          title,
-          address,
-          photos,
-          description,
-          perks,
-          extraInfo,
-          checkIn,
-          checkOut,
-          maxGuests,
-        });
-        Places.bulkSave();
-      }
-      res.json("updated");
-    });
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
+
+  jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+    if (error) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const PlaceDoc = await Places.findById(id);
+      if (!PlaceDoc) {
+        return res.status(404).json({ message: "Place not found" });
+      }
+
+      if (PlaceDoc.owner.toString() !== userData.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      PlaceDoc.set({
+        title,
+        address,
+        photos,
+        description,
+        perks,
+        extraInfo,
+        checkIn,
+        checkOut,
+        maxGuests,
+      });
+
+      await PlaceDoc.save();
+      res.json("updated");
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+});
+
+app.delete("/places/:id", async (req, res) => {
+  const { id } = req.params;
+  const { token } = req.cookies;
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  jwt.verify(token, jwtSecret, {}, async (error, userData) => {
+    if (error) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const PlaceDoc = await Places.findById(id);
+      if (!PlaceDoc) {
+        return res.status(404).json({ message: "Place not found" });
+      }
+
+      if (PlaceDoc.owner.toString() !== userData.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await Places.deleteOne({ _id: id });
+      res.json({ message: "Deleted successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+});
+
+
+app.post("/bookings", async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const { place, checkIn, checkOut, numberOfGuests, name, phone, price } = req.body;
+      const bookingDoc = await Booking.create({
+        place,
+        user: userData.id,
+        checkIn,
+        checkOut,
+        numberOfGuests,
+        name,
+        phone,
+        price,
+      });
+      res.json(bookingDoc);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error creating booking" });
+    }
+  });
+});
+
+app.get("/bookings", async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const bookingDocs = await Booking.find({ user: userData.id }).populate("place");
+      res.json(bookingDocs);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching bookings" });
+    }
+  });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT} `));

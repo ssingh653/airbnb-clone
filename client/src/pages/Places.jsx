@@ -1,10 +1,21 @@
-import { React, lazy, Suspense, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { React, lazy, Suspense, useState, useEffect } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Perks from "../components/Perks";
 import axios from "axios";
 import Loading from "../components/Loading";
 // import Accomodations from "../components/Accomodations";
 const Accomodations = lazy(() => import("../components/Accomodations"));
+
+const getPhotoUrl = (photo) => {
+  if (!photo) return "";
+  if (photo.startsWith("http://") || photo.startsWith("https://")) {
+    return photo;
+  }
+  const cleanPhoto = photo.replace(/\\/g, "/").replace(/^uploads\//, "");
+  const isProd = process.env.NODE_ENV === "production";
+  const baseUrl = isProd ? "https://airbnb-clone-app-r59g.onrender.com" : "http://localhost:4000";
+  return `${baseUrl}/uploads/${cleanPhoto}`;
+};
 
 const Places = () => {
   const [value, setValue] = useState({
@@ -19,8 +30,32 @@ const Places = () => {
     maxGuests: 1,
   });
 
+  const navigate = useNavigate();
   console.log("value", value);
-  const { action, id } = useParams();
+  const { action } = useParams();
+  const id = action && action !== "new" ? action : undefined;
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    axios.get("/places/" + id).then((response) => {
+      const { data } = response;
+      if (data) {
+        setValue({
+          title: data.title || "",
+          address: data.address || "",
+          photos: data.photos || [],
+          description: data.description || "",
+          perks: data.perks || [],
+          extraInfo: data.extraInfo || "",
+          checkIn: data.checkIn || "",
+          checkOut: data.checkOut || "",
+          maxGuests: data.maxGuests || 1,
+        });
+      }
+    });
+  }, [id]);
 
   async function formSubmit(ev) {
     ev.preventDefault();
@@ -38,16 +73,31 @@ const Places = () => {
     if (id) {
       const PlacesDoc = await axios.put("/addplaces", { id, ...places });
       if (PlacesDoc) {
-        alert("Added Successfully");
+        alert("Updated Successfully");
+        navigate("/account/places");
       }
     } else {
       const PlacesDoc = await axios.post("/addplaces", places);
       if (PlacesDoc) {
         alert("Added Successfully");
+        navigate("/account/places");
       }
     }
   }
+
+  async function deletePlace(ev) {
+    ev.preventDefault();
+    if (window.confirm("Are you sure you want to delete this accommodation?")) {
+      const res = await axios.delete("/places/" + id);
+      if (res) {
+        alert("Deleted Successfully");
+        navigate("/account/places");
+      }
+    }
+  }
+
   function deletePhoto(link) {
+
     // ev.preventDefault();
     setValue((prevState) => ({
       ...prevState,
@@ -64,9 +114,7 @@ const Places = () => {
       data.append("photos", files[i]);
     }
     axios
-      .post("/upload", data, {
-        headers: { "Content-Type": "multipart / form - data" },
-      })
+      .post("/upload", data)
       .then((response) => {
         const { data: filenames } = response;
         for (let i = 0; i < filenames.length; i++) {
@@ -82,20 +130,21 @@ const Places = () => {
 
   return (
     <div>
-      {action !== "new" && (
+      {action === undefined && (
         <div>
-          <div className="text-center">
+          <div className="flex justify-between items-center mb-6 pl-2">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">My Properties</h2>
             <Link
-              className="inline-flex gap-2 justify-center border rounded-full cursor-pointer bg-indigo-200 p-2"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-2.5 px-5 rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition duration-200 text-sm tracking-tight"
               to="/account/places/new"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={1.5}
+                strokeWidth={2.2}
                 stroke="currentColor"
-                className="w-6 h-6"
+                className="w-4 h-4"
               >
                 <path
                   strokeLinecap="round"
@@ -103,7 +152,7 @@ const Places = () => {
                   d="M12 4.5v15m7.5-7.5h-15"
                 />
               </svg>
-              Add new place
+              Add New Place
             </Link>
           </div>
           <Suspense fallback={<Loading />}>
@@ -111,8 +160,18 @@ const Places = () => {
           </Suspense>
         </div>
       )}
-      {action === "new" && (
-        <div className="m-4">
+      {action !== undefined && (
+        <div className="m-4 max-w-4xl mx-auto">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex gap-1 items-center bg-gray-150 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 transition text-gray-800 px-4 py-2 rounded-full font-semibold shadow-sm mb-6 border border-gray-250 dark:border-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back
+          </button>
           <form className="" onSubmit={formSubmit}>
             <label htmlFor="" className="">
               Title
@@ -140,81 +199,64 @@ const Places = () => {
               }
             />
             <br />
-            <label htmlFor="" className="">
-              Photos
-            </label>
-            <br />
-            <div className="inline-flex gap-2 p-2 rounded-full bg-gray-100">
-              <div className="max-w-sm border rounded-full bg-gray-200 px-2 hover:shadow">
-                <label className="cursor-pointer flex">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFile}
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 pl-1">Photos</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-2">
+              {/* Uploader Box */}
+              <label className="h-28 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-rose-500 dark:hover:border-rose-400 rounded-2xl cursor-pointer flex flex-col items-center justify-center gap-1 bg-gray-50 dark:bg-gray-800 hover:bg-rose-50/20 dark:hover:bg-rose-950/10 text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-455 transition duration-200">
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFile}
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
                   />
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-                    />
-                  </svg>
-                  Upload
-                </label>
-              </div>
-            </div>
+                </svg>
+                <span className="text-xs font-bold uppercase tracking-wider">Upload</span>
+              </label>
 
-            <br />
-            <div className="mt-2 gap-2 grid grid-cols-5 md:grid-cols-4 lg:grid-cols-6">
+              {/* Rendered Uploaded Photos */}
               {value.photos.length > 0 &&
-                value.photos.map((link) => {
-                  return (
-                    <div className="h-28 flex relative" key={link}>
-                      {/* <img
-                        className="rounded-2xl w-full object-cover"
-                        src={
-                          process.env.NODE_ENV === "production"
-                            ? "https://airbnb-clone-app-r59g.onrender.com"
-                            : "http://localhost:4000/uploads/" + link
-                        }
-                        alt="link"
-                      /> */}
-                      <img
-                        className="rounded-2xl w-full object-cover"
-                        src={link}
-                        alt="place"
-                      />
-
-                      <div
-                        className="absolute py-2 px-3 bg-black bg-opacity-50 text-white bottom-2 right-2 rounded-2xl cursor-pointer"
-                        onClick={() => deletePhoto(link)}
+                value.photos.map((link) => (
+                  <div className="h-28 flex relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm group" key={link}>
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      src={getPhotoUrl(link)}
+                      alt="uploaded preview"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => deletePhoto(link)}
+                      className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-xl cursor-pointer hover:bg-red-500 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="w-4 h-4"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  );
-                })}
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
             </div>
 
             <label htmlFor="" className="">
@@ -296,11 +338,25 @@ const Places = () => {
               </div>
             </div>
 
-            <br />
-            <div className="">
-              <button className="bg-indigo-500 hover:bg-violet-700 text-white font-bold p-2 rounded-full">
-                Add Place
+            <div className="flex gap-4 mt-6">
+              <button className="flex-1 px-6 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold rounded-2xl shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 text-sm tracking-tight">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                {id ? "Save Accommodation" : "Add Accommodation"}
               </button>
+              {id && (
+                <button
+                  type="button"
+                  onClick={deletePlace}
+                  className="px-6 py-3.5 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 dark:hover:text-white font-bold rounded-2xl active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 text-sm tracking-tight"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                  Delete Place
+                </button>
+              )}
             </div>
           </form>
         </div>

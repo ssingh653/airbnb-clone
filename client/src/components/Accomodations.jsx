@@ -2,42 +2,49 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+const getPhotoUrl = (photo) => {
+  if (!photo) return "";
+  if (photo.startsWith("http://") || photo.startsWith("https://")) {
+    return photo;
+  }
+  const cleanPhoto = photo.replace(/\\/g, "/").replace(/^uploads\//, "");
+  const isProd = process.env.NODE_ENV === "production";
+  const baseUrl = isProd ? "https://airbnb-clone-app-r59g.onrender.com" : "http://localhost:4000";
+  return `${baseUrl}/uploads/${cleanPhoto}`;
+};
+
 const Accomodations = () => {
   const [places, setPlace] = useState([]);
   useEffect(() => {
     async function fetchData() {
-      const { data } = await axios.get("/places");
-      console.log("data", data);
-      setPlace(data);
+      try {
+        const { data } = await axios.get("/places");
+        if (Array.isArray(data)) {
+          setPlace(data);
+        }
+      } catch (error) {
+        console.error("Error fetching places:", error);
+      }
     }
     fetchData();
   }, []);
 
   return (
     <div className="my-2">
-      {places.length > 0 &&
+      {places && places.length > 0 &&
         places.map((place) => (
           <Link
             to={"/account/places/" + place._id}
-            className="my-2 p-2 cursor-pointer bg-gray-200 rounded-md flex "
+            className="my-3 p-4 cursor-pointer bg-white dark:bg-gray-800 rounded-2xl flex gap-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300"
           >
-            <div className="bg-gray-300 rounded-md mx-2 w-48">
-              {place.photos.length > 0 && (
-                // <img
-                //   src={
-                //     process.env.NODE_ENV === "production"
-                //       ? "https://airbnb-clone-app-r59g.onrender.com"
-                //       : "http://localhost:4000/uploads/" + place.photos[0]
-                //   }
-                //   alt="property"
-                // />
-                <img src={place.photos[0]} alt="property" />
+            <div className="bg-gray-200 dark:bg-gray-700 rounded-xl w-48 h-32 overflow-hidden flex items-center justify-center shrink-0">
+              {place.photos && place.photos.length > 0 && (
+                <img className="object-cover w-full h-full" src={getPhotoUrl(place.photos[0])} alt="property" />
               )}
             </div>
-            <div className="grow-0 shrink">
-              <h1>{place.title}</h1>
-
-              <p>{place.description}</p>
+            <div className="grow-0 shrink min-w-0">
+              <h2 className="text-xl font-bold tracking-tight text-gray-800 dark:text-gray-200 truncate">{place.title}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-3 leading-relaxed">{place.description}</p>
             </div>
           </Link>
         ))}

@@ -7,6 +7,7 @@ import Register from "./pages/registerPage";
 import axios from "axios";
 import { UserContextProvider } from "./UserContext";
 import Account from "./pages/Account";
+import PlaceInfo from "./pages/PlaceInfo";
 import { disableReactDevTools } from "@fvilers/disable-react-devtools";
 
 if (process.env.NODE_ENV === "production") {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/account/:subpage?" element={<Account />} />
           <Route path="/account/:subpage/:action?" element={<Account />} />
           <Route path="/account/:subpage/:id?" element={<Account />} />
+          <Route path="/placeinfo/:id" element={<PlaceInfo />} />
         </Route>
       </Routes>
     </UserContextProvider>
