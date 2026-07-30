@@ -180,9 +180,9 @@ const Places = () => {
   return (
     <div>
       {action === undefined && (
-        <div>
+        <div className="max-w-4xl mx-auto py-4">
           <div className="flex justify-between items-center mb-6 pl-2">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">My Properties</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Accomodations</h2>
             <Link
               className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-2.5 px-5 rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition duration-200 text-sm tracking-tight"
               to="/account/places/new"

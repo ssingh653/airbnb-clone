@@ -51,27 +51,37 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const userDoc = await User.findOne({ email });
-  if (userDoc) {
-    const passOk = bcrypt.compareSync(password, userDoc.password);
-    if (passOk) {
-      jwt.sign(
-        { email: userDoc.email, id: userDoc._id, name: userDoc.name },
-        jwtSecret,
-        {},
-        (err, token) => {
-          if (err) throw err;
-          res.cookie("token", token, {
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            secure: process.env.NODE_ENV === "production",
-          }).json(userDoc);
-        },
-      );
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+
+  try {
+    const userDoc = await User.findOne({ email });
+    if (userDoc) {
+      const passOk = bcrypt.compareSync(password, userDoc.password);
+      if (passOk) {
+        jwt.sign(
+          { email: userDoc.email, id: userDoc._id, name: userDoc.name },
+          jwtSecret,
+          {},
+          (err, token) => {
+            if (err) throw err;
+            res.cookie("token", token, {
+              sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+              secure: process.env.NODE_ENV === "production",
+            }).json(userDoc);
+          },
+        );
+      } else {
+        res.status(401).json({ error: "Incorrect password" });
+      }
     } else {
-      res.status(422).json("pass not ok");
+      res.status(404).json({ error: "User not found with this email" });
     }
-  } else {
-    res.json("not found");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -83,7 +93,7 @@ app.get("/profile", async (req, res) => {
   }
 
   try {
-    const userData = await jwt.verify(token, jwtSecret);
+    const userData = jwt.verify(token, jwtSecret);
     const userDoc = await User.findById(userData.id).select("-password").lean();
     res.json(userDoc);
   } catch (error) {

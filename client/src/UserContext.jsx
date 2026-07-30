@@ -17,6 +17,12 @@ export function UserContextProvider({ children }) {
   // }, [user]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setReady(true);
+      return;
+    }
+
     axios
       .get("/profile", { withCredentials: true })
       .then(({ data }) => {
@@ -24,6 +30,7 @@ export function UserContextProvider({ children }) {
       })
       .catch(() => {
         setUser(null);
+        localStorage.removeItem("token");
       })
       .finally(() => {
         setReady(true);

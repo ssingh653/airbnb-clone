@@ -24,10 +24,12 @@ const LoginPage = () => {
     }
     try {
       const { data } = await axios.post("/login", { email, password });
-      setRedirect(true);
+      localStorage.setItem("token", "true");
       setUser(data);
+      setRedirect(true);
     } catch (e) {
-      showAlert("Login failed. Please check your email and password.", "error");
+      const message = e.response?.data?.error || "Login failed. Please check your email and password.";
+      showAlert(message, "error");
     }
   }
   if (redirect) {

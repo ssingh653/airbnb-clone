@@ -54,7 +54,7 @@ const Properties = () => {
         ))
       ) : (
         <div className="col-span-full text-center py-12 text-gray-500 font-semibold text-lg">
-          No accommodations found matching your search.
+          No accommodations found.
         </div>
       )}
     </div>
