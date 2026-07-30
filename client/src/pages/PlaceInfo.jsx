@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
 import { UserContext } from "../UserContext";
+import { usePopup } from "../PopupContext";
 
 const getPhotoUrl = (photo) => {
   if (!photo) return "";
@@ -20,6 +21,7 @@ const PlaceInfo = () => {
   const [place, setPlace] = useState(null);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const { user } = useContext(UserContext);
+  const { showAlert } = usePopup();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
@@ -47,12 +49,31 @@ const PlaceInfo = () => {
 
   const handleBooking = async () => {
     if (!user) {
-      alert("Please login first to book accommodations.");
+      await showAlert("Please login first to book accommodations.", "error");
       navigate("/login");
       return;
     }
-    if (!checkIn || !checkOut || !name || !phone) {
-      alert("Please fill in all booking details.");
+    if (!checkIn) {
+      await showAlert("Please select a check-in date.", "error");
+      return;
+    }
+    if (!checkOut) {
+      await showAlert("Please select a check-out date.", "error");
+      return;
+    }
+    const inDate = new Date(checkIn);
+    const outDate = new Date(checkOut);
+    if (outDate <= inDate) {
+      await showAlert("Check-out date must be after the check-in date.", "error");
+      return;
+    }
+    if (!name || name.trim().length < 2) {
+      await showAlert("Please enter your full name (minimum 2 characters).", "error");
+      return;
+    }
+    const phoneRegex = /^\+?[0-9\s\-()]{7,15}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      await showAlert("Please enter a valid phone number.", "error");
       return;
     }
     try {
@@ -65,11 +86,11 @@ const PlaceInfo = () => {
         phone,
         price: totalPrice,
       });
-      alert("Booking successful!");
+      await showAlert("Booking successful!", "success");
       setRedirect("/account/bookings");
     } catch (error) {
       console.error(error);
-      alert("Booking failed. Please try again.");
+      await showAlert("Booking failed. Please try again.", "error");
     }
   };
 

@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import Perks from "../components/Perks";
 import axios from "axios";
 import Loading from "../components/Loading";
+import { usePopup } from "../PopupContext";
 // import Accomodations from "../components/Accomodations";
 const Accomodations = lazy(() => import("../components/Accomodations"));
 
@@ -31,12 +32,24 @@ const Places = () => {
   });
 
   const navigate = useNavigate();
-  console.log("value", value);
+  const { showAlert, showConfirm } = usePopup();
+  const [isUploading, setIsUploading] = useState(false);
   const { action } = useParams();
   const id = action && action !== "new" ? action : undefined;
 
   useEffect(() => {
     if (!id) {
+      setValue({
+        title: "",
+        address: "",
+        photos: [],
+        description: "",
+        perks: [],
+        extraInfo: "",
+        checkIn: "",
+        checkOut: "",
+        maxGuests: 1,
+      });
       return;
     }
     axios.get("/places/" + id).then((response) => {
@@ -59,6 +72,36 @@ const Places = () => {
 
   async function formSubmit(ev) {
     ev.preventDefault();
+    if (!value.title || value.title.trim().length < 5) {
+      showAlert("Title is required and must be at least 5 characters long.", "error");
+      return;
+    }
+    if (!value.address || value.address.trim().length === 0) {
+      showAlert("Property address is required.", "error");
+      return;
+    }
+    if (!value.photos || value.photos.length === 0) {
+      showAlert("Please upload at least one photo for the property.", "error");
+      return;
+    }
+    if (!value.description || value.description.trim().length < 10) {
+      showAlert("Description is required and must be at least 10 characters long.", "error");
+      return;
+    }
+    if (!value.checkIn || value.checkIn.trim().length === 0) {
+      showAlert("Check-in time is required.", "error");
+      return;
+    }
+    if (!value.checkOut || value.checkOut.trim().length === 0) {
+      showAlert("Check-out time is required.", "error");
+      return;
+    }
+    const maxGuestsInt = parseInt(value.maxGuests);
+    if (!maxGuestsInt || maxGuestsInt < 1 || isNaN(maxGuestsInt)) {
+      showAlert("Maximum number of guests must be at least 1.", "error");
+      return;
+    }
+
     const places = {
       title: value.title,
       address: value.address,
@@ -68,18 +111,18 @@ const Places = () => {
       extraInfo: value.extraInfo,
       checkIn: value.checkIn,
       checkOut: value.checkOut,
-      maxGuests: parseInt(value.maxGuests),
+      maxGuests: maxGuestsInt,
     };
     if (id) {
       const PlacesDoc = await axios.put("/addplaces", { id, ...places });
       if (PlacesDoc) {
-        alert("Updated Successfully");
+        await showAlert("Updated Successfully", "success");
         navigate("/account/places");
       }
     } else {
       const PlacesDoc = await axios.post("/addplaces", places);
       if (PlacesDoc) {
-        alert("Added Successfully");
+        await showAlert("Added Successfully", "success");
         navigate("/account/places");
       }
     }
@@ -87,10 +130,10 @@ const Places = () => {
 
   async function deletePlace(ev) {
     ev.preventDefault();
-    if (window.confirm("Are you sure you want to delete this accommodation?")) {
+    if (await showConfirm("Are you sure you want to delete this accommodation?")) {
       const res = await axios.delete("/places/" + id);
       if (res) {
-        alert("Deleted Successfully");
+        await showAlert("Deleted Successfully", "success");
         navigate("/account/places");
       }
     }
@@ -106,9 +149,10 @@ const Places = () => {
   }
 
   function handleFile(ev) {
-    // ev.preventDefault();
     const files = ev.target.files;
+    if (!files || files.length === 0) return;
 
+    setIsUploading(true);
     const data = new FormData();
     for (let i = 0; i < files.length; i++) {
       data.append("photos", files[i]);
@@ -123,9 +167,14 @@ const Places = () => {
             photos: [...prevState.photos, filenames[i]],
           }));
         }
-        // setValue({ ...value, photos: [{ ...filenames }] });
+      })
+      .catch((err) => {
+        console.error("Upload error:", err);
+        showAlert("Failed to upload image. Please try again.", "error");
+      })
+      .finally(() => {
+        setIsUploading(false);
       });
-    // alert("Upload Successful");
   }
 
   return (
@@ -208,22 +257,35 @@ const Places = () => {
                   multiple
                   className="hidden"
                   onChange={handleFile}
+                  disabled={isUploading}
                 />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.8}
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-                  />
-                </svg>
-                <span className="text-xs font-bold uppercase tracking-wider">Upload</span>
+                {isUploading ? (
+                  <>
+                    <svg className="animate-spin h-6 w-6 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-xs font-bold uppercase tracking-wider text-rose-500">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.8}
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
+                      />
+                    </svg>
+                    <span className="text-xs font-bold uppercase tracking-wider">Upload</span>
+                  </>
+                )}
               </label>
 
               {/* Rendered Uploaded Photos */}
@@ -326,15 +388,49 @@ const Places = () => {
                 <label htmlFor="" className="">
                   Max Guests
                 </label>
-                <br />
-                <input
-                  type="text"
-                  className=""
-                  placeholder="1"
-                  onChange={(ev) =>
-                    setValue({ ...value, maxGuests: ev.target.value })
-                  }
-                />
+                <div className="relative my-2 w-full">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue({
+                        ...value,
+                        maxGuests: Math.max(1, (parseInt(value.maxGuests) || 1) - 1),
+                      })
+                    }
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 hover:bg-rose-500 hover:text-white dark:bg-gray-700 dark:hover:bg-rose-500 dark:hover:text-white border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-300 transition duration-150 active:scale-95 cursor-pointer shadow-sm text-base font-bold select-none"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full border border-gray-200 dark:border-gray-700 py-3 px-12 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-200 dark:focus:ring-rose-900 focus:border-rose-500 transition-all duration-200 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="1"
+                    value={value.maxGuests}
+                    onChange={(ev) =>
+                      setValue({
+                        ...value,
+                        maxGuests: Math.max(1, parseInt(ev.target.value) || 1),
+                      })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue({
+                        ...value,
+                        maxGuests: (parseInt(value.maxGuests) || 1) + 1,
+                      })
+                    }
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 hover:bg-rose-500 hover:text-white dark:bg-gray-700 dark:hover:bg-rose-500 dark:hover:text-white border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-300 transition duration-150 active:scale-95 cursor-pointer shadow-sm text-base font-bold select-none"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 

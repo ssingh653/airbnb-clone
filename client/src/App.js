@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import Register from "./pages/registerPage";
 import axios from "axios";
 import { UserContextProvider } from "./UserContext";
+import { PopupProvider } from "./PopupContext";
 import Account from "./pages/Account";
 import PlaceInfo from "./pages/PlaceInfo";
 import { disableReactDevTools } from "@fvilers/disable-react-devtools";
@@ -21,8 +22,9 @@ axios.defaults.withCredentials = true;
 
 function App() {
   return (
-    <UserContextProvider>
-      <Routes>
+    <PopupProvider>
+      <UserContextProvider>
+        <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
@@ -34,6 +36,7 @@ function App() {
         </Route>
       </Routes>
     </UserContextProvider>
+    </PopupProvider>
   );
 }
 

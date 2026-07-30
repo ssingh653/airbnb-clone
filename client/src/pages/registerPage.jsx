@@ -3,24 +3,40 @@ import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 
+import { usePopup } from "../PopupContext";
+
 function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [redirect, setRedirect] = useState(false);
+  const { showAlert } = usePopup();
 
-  const Register = (ev) => {
+  const Register = async (ev) => {
     ev.preventDefault();
+    if (!name || name.trim().length < 2) {
+      showAlert("Full Name must be at least 2 characters long.", "error");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      showAlert("Please enter a valid email address.", "error");
+      return;
+    }
+    if (!password || password.length < 6) {
+      showAlert("Password must be at least 6 characters long.", "error");
+      return;
+    }
     try {
-      axios.post("/register", {
+      await axios.post("/register", {
         name,
         email,
         password,
       });
+      await showAlert("Registration Successful! Redirecting to login...", "success");
       setRedirect(true);
-      alert("Registration Success");
     } catch (e) {
-      alert("Registration Failed");
+      showAlert("Registration Failed. Please try again.", "error");
     }
   };
   if (redirect) {

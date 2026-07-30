@@ -2,22 +2,32 @@ import axios from "axios";
 import { React, useContext, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { UserContext } from "../UserContext";
+import { usePopup } from "../PopupContext";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [redirect, setRedirect] = useState(false);
   const { setUser } = useContext(UserContext);
+  const { showAlert } = usePopup();
 
   async function onLogin(e) {
     e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      showAlert("Please enter a valid email address.", "error");
+      return;
+    }
+    if (!password || password.length < 6) {
+      showAlert("Password must be at least 6 characters long.", "error");
+      return;
+    }
     try {
       const { data } = await axios.post("/login", { email, password });
-      // console.log(data);
       setRedirect(true);
       setUser(data);
     } catch (e) {
-      alert("Login failed");
+      showAlert("Login failed. Please check your email and password.", "error");
     }
   }
   if (redirect) {

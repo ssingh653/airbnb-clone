@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Loading from "../components/Loading.jsx";
+import { usePopup } from "../PopupContext";
 
 const getPhotoUrl = (photo) => {
   if (!photo) return "";
@@ -17,6 +18,20 @@ const getPhotoUrl = (photo) => {
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { showAlert, showConfirm } = usePopup();
+
+  const handleCancelBooking = async (id) => {
+    if (await showConfirm("Are you sure you want to cancel this booking?")) {
+      try {
+        await axios.delete("/bookings/" + id);
+        await showAlert("Booking cancelled successfully", "success");
+        setBookings((prev) => prev.filter((b) => b._id !== id));
+      } catch (err) {
+        console.error(err);
+        showAlert("Failed to cancel booking. Please try again.", "error");
+      }
+    }
+  };
 
   useEffect(() => {
     axios
@@ -98,7 +113,7 @@ const Bookings = () => {
                 className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-md hover:shadow-lg transition flex flex-col sm:flex-row gap-4"
               >
                 {/* Left side Thumbnail */}
-                <div className="w-full sm:w-48 h-40 bg-gray-150 dark:bg-gray-700 shrink-0 overflow-hidden">
+                <div className="w-full sm:w-48 h-38 bg-gray-150 dark:bg-gray-700 shrink-0 overflow-hidden">
                   {booking.place?.photos?.[0] ? (
                     <img
                       className="w-full h-full object-cover"
@@ -175,24 +190,33 @@ const Bookings = () => {
                       </span>
                     </div>
                     
-                    {booking.place?._id && (
-                      <Link
-                        to={`/placeinfo/${booking.place._id}`}
-                        className="text-xs font-bold text-rose-500 dark:text-rose-400 hover:text-rose-600 flex items-center gap-1 hover:underline"
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => handleCancelBooking(booking._id)}
+                        className="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                       >
-                        View Property
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="w-3.5 h-3.5"
+                        Cancel Booking
+                      </button>
+
+                      {booking.place?._id && (
+                        <Link
+                          to={`/placeinfo/${booking.place._id}`}
+                          className="text-xs font-bold text-rose-500 dark:text-rose-400 hover:text-rose-600 flex items-center gap-1 hover:underline"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                      </Link>
-                    )}
+                          View Property
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="w-3.5 h-3.5"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

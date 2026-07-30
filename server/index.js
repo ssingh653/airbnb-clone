@@ -37,9 +37,7 @@ app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   // TODO - implement registration logic here
   try {
-    console.log("inside try 1");
     const hashedPwd = await bcrypt.hash(password, 10);
-    console.log(name, email);
     const userData = await User.create({
       name,
       email,
@@ -63,7 +61,10 @@ app.post("/login", async (req, res) => {
         {},
         (err, token) => {
           if (err) throw err;
-          res.cookie("token", token).json(userDoc);
+          res.cookie("token", token, {
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            secure: process.env.NODE_ENV === "production",
+          }).json(userDoc);
         },
       );
     } else {
@@ -95,7 +96,10 @@ app.delete("/logout", (req, res) => {
   if (req.session) {
     req.session.destroy();
   }
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
   res.json("logged out");
 });
 
@@ -356,6 +360,33 @@ app.get("/bookings", async (req, res) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error fetching bookings" });
+    }
+  });
+});
+
+app.delete("/bookings/:id", async (req, res) => {
+  const { id } = req.params;
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const bookingDoc = await Booking.findById(id);
+      if (!bookingDoc) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      if (bookingDoc.user.toString() !== userData.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      await Booking.deleteOne({ _id: id });
+      res.json({ message: "Booking cancelled successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error cancelling booking" });
     }
   });
 });

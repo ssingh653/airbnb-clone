@@ -86,21 +86,39 @@ const Header = () => {
       </Link>
 
       {/* Search Input Box */}
-      <div className="flex gap-x-2 border border-gray-300 dark:border-gray-700 rounded-full px-2 py-1 shadow-sm items-center w-full md:w-auto bg-gray-50 dark:bg-gray-800 focus-within:ring-2 focus-within:ring-rose-500 transition-all">
-        <input
-          type="text"
-          placeholder="Search places..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="pl-4 border-none focus:outline-none bg-transparent text-sm w-full md:w-64 py-1.5 text-gray-800 dark:text-gray-100"
-        />
-        <button onClick={handleSearch} className="bg-rose-500 hover:bg-rose-600 text-white p-2.5 rounded-full transition-all">
+      <div className="flex border border-gray-200 dark:border-gray-700 rounded-full shadow-sm hover:shadow-md items-center w-full md:w-auto bg-white dark:bg-gray-800 transition-all duration-300 pr-2 pl-4 py-1.5 focus-within:ring-2 focus-within:ring-rose-200 dark:focus-within:ring-rose-900 focus-within:border-rose-500">
+        {/* Anywhere (Interactive search input) */}
+        <div className="flex flex-col grow min-w-0 pr-3 border-r border-gray-200 dark:border-gray-700 text-left">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-rose-500 dark:text-rose-400 leading-none">Where</label>
+          <input
+            type="search"
+            placeholder="Search destinations"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-xs font-semibold py-0.5 px-0 mt-0.5 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 sm:w-40 md:w-44"
+          />
+        </div>
+        
+        {/* Any week (Decorative / static filter) */}
+        <div className="hidden sm:flex flex-col px-4 border-r border-gray-200 dark:border-gray-700 shrink-0 text-left">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">When</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5 select-none">Any week</span>
+        </div>
+
+        {/* Add guests (Decorative / static filter) */}
+        <div className="hidden sm:flex flex-col px-4 shrink-0 text-left">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">Who</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5 select-none">Add guests</span>
+        </div>
+
+        {/* Search Action Button */}
+        <button onClick={handleSearch} className="bg-rose-500 hover:bg-rose-600 text-white p-3 rounded-full transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center shrink-0 ml-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={2}
+            strokeWidth={3}
             stroke="currentColor"
             className="w-4 h-4"
           >
