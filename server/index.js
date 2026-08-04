@@ -25,7 +25,7 @@ app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(
   cors({
     credentials: true,
-    origin: ["http://localhost:3000", "https://airbnb-clone-t3um.onrender.com"],
+    origin: ["http://localhost:3000", "http://15.207.100.25", "https://airbnb-clone-t3um.onrender.com"],
   }),
 );
 
