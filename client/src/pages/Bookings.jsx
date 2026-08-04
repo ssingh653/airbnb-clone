@@ -107,6 +107,7 @@ const Bookings = () => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white pl-2 mb-2 text-left">Your Bookings</h2>
           {bookings.map((booking) => {
             const nights = calculateNights(booking.checkIn, booking.checkOut);
+            const placeId = booking.place?._id || booking.place?.id || (typeof booking.place === "string" ? booking.place : null);
             return (
               <div
                 key={booking._id}
@@ -198,9 +199,9 @@ const Bookings = () => {
                         Cancel Booking
                       </button>
 
-                      {booking.place?._id && (
+                      {placeId && (
                         <Link
-                          to={`/placeinfo/${booking.place._id}`}
+                          to={`/placeinfo/${placeId}`}
                           className="text-xs font-bold text-rose-500 dark:text-rose-400 hover:text-rose-600 flex items-center gap-1 hover:underline"
                         >
                           View Property
