@@ -14,10 +14,16 @@ import { disableReactDevTools } from "@fvilers/disable-react-devtools";
 if (process.env.NODE_ENV === "production") {
   disableReactDevTools();
 }
+// axios.defaults.baseURL =
+//   process.env.NODE_ENV === "production"
+//     ? "https://airbnb-clone-app-r59g.onrender.com"
+//     : "http://localhost:4000";
+
 axios.defaults.baseURL =
   process.env.NODE_ENV === "production"
-    ? "https://airbnb-clone-app-r59g.onrender.com"
+    ? "http://15.207.100.25/api"
     : "http://localhost:4000";
+
 axios.defaults.withCredentials = true;
 
 function App() {
