@@ -71,6 +71,7 @@ jobs:
         with:
           node-version: '22.x'
           cache: npm
+          cache-dependency-path: server/package-lock.json
 
       - name: Verify Node and npm
         working-directory: ./server
