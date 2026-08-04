@@ -50,10 +50,11 @@ jobs:
         working-directory: ./client
         run: |
           rm -rf node_modules
+          npm cache clean --force
 
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm install
 
       # Uncomment if your React app requires environment variables
       # - name: Create frontend .env file
