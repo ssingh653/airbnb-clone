@@ -6,13 +6,12 @@ on:
       - main
 
 jobs:
-  deploy:
-    runs-on: self-hosted
-
+  # Build the React frontend on GitHub-hosted runners to avoid OOM on small self-hosted runners
+  build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [22.x]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,12 +21,52 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: |
-            server/package-lock.json
-            client/package-lock.json
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Verify ESLint versions
+        working-directory: ./client
+        run: |
+          npm ls eslint || true
+          npm ls eslint-config-react-app || true
+          npm ls eslint-plugin-jest || true
+
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+
+      - name: Upload client build
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-build
+          path: client/build
+
+  # Deploy on the self-hosted runner (has access to your EC2 instance environment)
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download client build
+        uses: actions/download-artifact@v4
+        with:
+          name: client-build
+          path: ./client/build
+
+      - name: Deploy frontend to Nginx
+        run: |
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./client/build/* /var/www/html/
+          sudo systemctl reload nginx
 
       # ------------------------------
-      # BACKEND SETUP
+      # BACKEND SETUP (on self-hosted)
       # ------------------------------
       - name: Install backend dependencies
         working-directory: ./server
@@ -35,46 +74,12 @@ jobs:
 
       - name: Create backend .env file
         working-directory: ./server
+        env:
+          PROD_BACKEND_ENV: ${{ secrets.PROD_BACKEND_ENV }}
         run: |
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "${PROD_BACKEND_ENV}" > .env
 
       - name: Start backend with PM2
         working-directory: ./server
         run: |
           /home/ubuntu/.nvm/versions/node/v22.23.2/bin/pm2 restart backend || /home/ubuntu/.nvm/versions/node/v22.23.2/bin/pm2 start index.js --name backend
-
-      # ------------------------------
-      # FRONTEND SETUP
-      # ------------------------------
-      - name: Clean frontend dependencies
-        working-directory: ./client
-        run: |
-          rm -rf node_modules
-          npm cache clean --force
-
-      - name: Install frontend dependencies
-        working-directory: ./client
-        run: npm install
-
-      # Uncomment if your React app requires environment variables
-      # - name: Create frontend .env file
-      #   working-directory: ./client
-      #   run: |
-      #     echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: Verify ESLint versions
-        working-directory: ./client
-        run: |
-          npm ls eslint
-          npm ls eslint-config-react-app
-          npm ls eslint-plugin-jest
-
-      - name: Build frontend
-        working-directory: ./client
-        run: npm run build
-
-      - name: Deploy frontend to Nginx
-        run: |
-          sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/build/* /var/www/html/
-          sudo systemctl reload nginx
