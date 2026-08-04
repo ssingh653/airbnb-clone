@@ -65,6 +65,19 @@ jobs:
           sudo cp -r ./client/build/* /var/www/html/
           sudo systemctl reload nginx
 
+      # Ensure Node is available on the self-hosted runner for backend steps
+      - name: Setup Node.js (backend)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+
+      - name: Verify Node and npm
+        working-directory: ./server
+        run: |
+          node -v
+          npm -v
+
       # ------------------------------
       # BACKEND SETUP (on self-hosted)
       # ------------------------------
